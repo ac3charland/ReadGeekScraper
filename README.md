@@ -10,7 +10,7 @@ A few ideas include tags, page length, links to Google Docs with notes for a boo
 
 2. ### As ReadGeek has aged, it has become less stable.
 
-This makes me concerned that my reading data will not be safe there indefinitely. At the very least, the site closing down due to a lack of use seems like a real possibility.
+This makes me concerned that my reading data will not be safe there indefinitely. Among the more likely risks is the site closing down due to a lack of use.
 
 ## The Solution?
 
@@ -23,3 +23,15 @@ I've come to realize a basic [Google Sheets](https://www.google.com/sheets/about
 ## The Challenge:
 
 According to ReadGeek, I've rated 151 books. While I could copy over my books by hand, manually transfering 151 books to a Google Sheet is not my idea of fun. Like any self-respecting programmer, I'd rather spend twice as much time writing a script to perform this process automatically.
+
+## How It Works
+
+1. [Cheerio](https://github.com/cheeriojs/cheerio) reads from a local HTML file to scrape the relevant data for each book and store it in an object. This includes some basic date formatting via [Moment](https://momentjs.com/).
+
+    * I did this as opposed to scraping the data directly from ReadGeek.com because my list of rated books is only accessible when logged in, and I was too lazy to write a script to log me in and take me to right page. Instead, I just visited the page in the browser and downloaded the raw HTML. ¯\\\_(ツ)_/¯
+
+2. This array of book objects is then plugged into the [Google Sheets API](https://developers.google.com/sheets/api/) and submitted as a batchUpdate request to a precreated spreadsheet.
+
+3. The API fills out the spreadsheet with all my rated books.
+
+4. Throughout the process, a local .env file protects sensitive information like my spreadsheet's id or the path to my HTML file.

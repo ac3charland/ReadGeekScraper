@@ -1,4 +1,6 @@
 const fs = require('fs')
+const cheerio = require('cheerio')
+const moment = require('moment')
 const readline = require('readline')
 const { google } = require('googleapis')
 require('dotenv').config()
@@ -15,7 +17,7 @@ const TOKEN_PATH = 'token.json'
 fs.readFile('credentials.json', (err, content) => {
     if (err) return console.log('Error loading client secret file:', err)
     // Authorize a client with credentials, then call the Google Sheets API.
-    authorize(JSON.parse(content), writeTest)
+    authorize(JSON.parse(content), scrapeBooks)
 })
 
 /**
@@ -138,4 +140,59 @@ function writeTest(auth) {
         if (err) return console.log('The API returned an error: ' + err)
         console.log('%d cells updated.', res.totalUpdatedCells)
     })
+}
+
+function scrapeBooks(auth) {
+    const sheets = google.sheets({ version: 'v4', auth })
+    
+    let books = []
+
+    const $ = cheerio.load(fs.readFileSync(keys.list.path));
+    $('.media').each((i, element) => {
+        const title = $(element).find('.media-body a').first().text()
+        const author = $(element).find('.media-heading').text()
+        const rating = $(element).find('.rating').text()
+        const rawDate = $(element).find('em').text().slice(10)
+        const dateRated = moment(rawDate, 'MMM-DD-YYYY').format('M/D/YYYY')
+        const book = { title, author, rating, dateRated }
+        books.push(book)
+    })
+
+    const titles = books.map(book => [book.title])
+    const authors = books.map(book => [book.author])
+    const datesFinished = books.map(book => [book.dateRated])
+    const ratings = books.map(book => [book.rating])
+
+    const data = [
+        {
+            range: 'Books!A2:A',
+            values: titles
+        },
+        {
+            range: 'Books!B2:B',
+            values: authors
+        },
+        {
+            range: 'Books!D2:D',
+            values: datesFinished
+        },
+        {
+            range: 'Books!E2:E',
+            values: ratings
+        },
+    ]
+
+    const resource = {
+        data,
+        valueInputOption: 'USER_ENTERED',
+    }
+
+    sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: keys.list.spreadsheetId,
+        resource: resource,
+    }, (err, res) => {
+        if (err) return console.log('The API returned an error: ' + err)
+        console.log('Update successful!')
+    })
+
 }

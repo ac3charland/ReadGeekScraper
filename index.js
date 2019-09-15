@@ -5,7 +5,7 @@ require('dotenv').config()
 const keys = require('./keys')
 
 // If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
@@ -15,7 +15,7 @@ const TOKEN_PATH = 'token.json'
 fs.readFile('credentials.json', (err, content) => {
     if (err) return console.log('Error loading client secret file:', err)
     // Authorize a client with credentials, then call the Google Sheets API.
-    authorize(JSON.parse(content), listMajors)
+    authorize(JSON.parse(content), writeTest)
 })
 
 /**
@@ -82,5 +82,26 @@ function readTest(auth) {
         } else {
             console.log('No entries found')
         }
+    })
+}
+
+function writeTest(auth) {
+    const sheets = google.sheets({ version: 'v4', auth })
+    let values = [
+        ['one', 'two', 'three', 'four', 'five'],
+    ]
+
+    const resource = {
+        values,
+    }
+
+    sheets.spreadsheets.values.update({
+        spreadsheetId: keys.list.spreadsheetId,
+        range: 'Books!A2:E2',
+        valueInputOption: 'RAW',
+        resource: resource,
+    }, (err, res) => {
+        if (err) return console.log('The API returned an error: ' + err)
+        console.log('%d cells updated.', res.updatedCells)
     })
 }

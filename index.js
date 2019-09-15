@@ -87,21 +87,55 @@ function readTest(auth) {
 
 function writeTest(auth) {
     const sheets = google.sheets({ version: 'v4', auth })
-    let values = [
-        ['one', 'two', 'three', 'four', 'five'],
+    const testBooks = [
+        {
+            title: 'Captain Underpants',
+            author: 'Dav Pilkey',
+            dateFinished: '12/25/2014',
+            rating: '10'
+        },
+        {
+            title: '1984',
+            author: 'George Orwell',
+            dateFinished: '1/25/2017',
+            rating: '9'
+        },
+    ]
+
+    const titles = testBooks.map(book => [book.title])
+    const authors = testBooks.map(book => [book.author])
+    const datesFinished = testBooks.map(book => [book.dateFinished])
+    const ratings = testBooks.map(book => [book.rating])
+
+    const data = [
+        {
+            range: 'Books!A2:A',
+            values: titles
+        },
+        {
+            range: 'Books!B2:B',
+            values: authors
+        },
+        {
+            range: 'Books!D2:D',
+            values: datesFinished
+        },
+        {
+            range: 'Books!E2:E',
+            values: ratings
+        },
     ]
 
     const resource = {
-        values,
+        data,
+        valueInputOption: 'RAW',
     }
 
-    sheets.spreadsheets.values.update({
+    sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: keys.list.spreadsheetId,
-        range: 'Books!A2:E2',
-        valueInputOption: 'RAW',
         resource: resource,
     }, (err, res) => {
         if (err) return console.log('The API returned an error: ' + err)
-        console.log('%d cells updated.', res.updatedCells)
+        console.log('%d cells updated.', res.totalUpdatedCells)
     })
 }
